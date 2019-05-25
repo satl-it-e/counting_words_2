@@ -29,17 +29,15 @@ class MyQueue{
         }
 
         void pop(){
-            std::unique_lock<std::mutex> lock(mtx);
-            cv.wait(lock, [this]() { return notified;});
-            while(!q->empty()){
-                T *element = reinterpret_cast<T*>(malloc(sizeof(T)));
-                *element = q->back();
-                q->pop();
-                std::cout << element;
-            }
-            notified = false;
-        }
+            std::vector<T> pop(int n);
 
+            std::unique_lock<std::mutex> lock(mtx);
+            while(q->empty())
+                { cv.wait(lock); }
+            T val = q->front();
+            q->pop();
+            return val;
+            }
 };
 
 
