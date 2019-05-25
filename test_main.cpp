@@ -63,6 +63,8 @@ class MyQueue{
 
 
 
+
+
 void index_string(MyQueue<std::string> &mq_str, MyQueue< std::map<std::string, int> > &mq_map){
     auto content = mq_str.pop();
     std::vector<std::string> spl_words;
@@ -76,15 +78,15 @@ void index_string(MyQueue<std::string> &mq_str, MyQueue< std::map<std::string, i
 }
 
 
-void merge_maps(MyQueue< std::map<std::string, int> > &mq_maps){
-    while (mq_maps.size() > 1){
-        auto maps = mq_maps.pop_some(2);
-//        for (auto &k: maps[0]){
-//            std::cout << typeid(maps[0]).name() << std::endl;
-//        }
-        mq_maps.push(maps[1]);
-    }
-}
+//void merge_maps(MyQueue< std::map<std::string, int> > &mq_maps){
+//    while (mq_maps.size() > 1){
+//        auto maps = mq_maps.pop_some(2);
+////        for (auto &k: maps[0]){
+////            std::cout << typeid(maps[0]).name() << std::endl;
+////        }
+//        mq_maps.push(maps[1]);
+//    }
+//}
 
 
 int main()
@@ -96,11 +98,21 @@ int main()
 
     std::vector<std::string> ls_filenames = {"data.txt", "data1.txt", "data2.txt"};
 
+    for(auto &f_name : ls_filenames){
+        std::ifstream in_f(f_name);
+        if (! in_f)
+            { std::cerr << "Couldn't open input-file."; return -2; }
+        std::string content; std::stringstream ss;
+        ss << in_f.rdbuf();
+        content = ss.str();
+        mq_str.push(std::ref(content));
+    }
+
         std::thread nt_index(&index_string, std::ref(mq_str), std::ref(mq_map));
-        std::thread nt_merge(&merge_maps, std::ref(mq_map));
+//        std::thread nt_merge(&merge_maps, std::ref(mq_map));
 
         all_my_threads.emplace_back(std::move(nt_index));
-        all_my_threads.emplace_back(std::move(nt_merge));
+//        all_my_threads.emplace_back(std::move(nt_merge));
 
 
 
