@@ -30,14 +30,31 @@ bool MyConfig::set_to_numb_file(const std::list<std::string> &s_values) {
     return false;
 }
 
-bool MyConfig::set_num_of_threads(const std::list<std::string> &s_values){
+
+bool MyConfig::set_num_of_ind_threads(const std::list<std::string> &s_values) {
     int ch = std::stoi(s_values.front());
     if (0 < ch){
         std::istringstream ss (s_values.front());
-        return ss >> num_of_threads ? true: false;
+        return ss >> indexing_threads ? true: false;
     }
     return false;
 }
+
+
+bool MyConfig::set_num_of_mrg_threads(const std::list<std::string> &s_values) {
+    int ch = std::stoi(s_values.front());
+    if (0 < ch){
+        std::istringstream ss (s_values.front());
+        return ss >> merging_threads ? true: false;
+    }
+    return false;
+}
+
+bool MyConfig::set_num_of_threads(const std::list<std::string> &s_values){
+    num_of_threads = indexing_threads + merging_threads;
+    return true;
+}
+
 
 
 bool MyConfig::is_configured(){
@@ -51,6 +68,8 @@ int MyConfig::load_configs_from_file(const std::string &f_name){
     cnf.emplace(std::make_pair("in_file", [this](const std::list<std::string> &s_values)-> bool {return set_in_file(s_values);}));
     cnf.emplace(std::make_pair("to_alph_file", [this](const std::list<std::string> &s_values)-> bool {return set_to_alph_file(s_values);}));
     cnf.emplace(std::make_pair("to_numb_file", [this](const std::list<std::string> &s_values)-> bool {return set_to_numb_file(s_values);}));
+    cnf.emplace(std::make_pair("indexing_threads", [this](const std::list<std::string> s_values)-> bool { return set_num_of_ind_threads(s_values);}));
+    cnf.emplace(std::make_pair("merging_threads", [this](const std::list<std::string> s_values)-> bool { return set_num_of_mrg_threads(s_values);}));
     cnf.emplace(std::make_pair("num_of_threads", [this](const std::list<std::string> &s_values)-> bool {return set_num_of_threads(s_values);}));
 
     try{
