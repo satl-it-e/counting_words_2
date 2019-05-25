@@ -20,7 +20,7 @@ int MyArchive::init(std::string& filename){
             archive_read_support_format_raw(a);
             int r = archive_read_open_filename(a, filename.c_str(), 10240); // Note 1
             if (r != ARCHIVE_OK) {
-                std::cerr << "Couldn't open archive" << filename << std::endl;
+                std::cerr << "Couldn't open archive " << filename << std::endl;
                 return -1;
             }
             is_arch = true;
