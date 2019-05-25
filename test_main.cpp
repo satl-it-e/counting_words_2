@@ -9,8 +9,11 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include <bits/stdc++.h>
-#include <boost/algorithm/string.hpp>
+
+#include "time_measure.h"
+#include "config.h"
+#include "additional.h"
+
 
 template<typename T>
 class MyQueue{
@@ -63,9 +66,7 @@ class MyQueue{
 
 
 void index_string(MyQueue<std::string> &mq_str, MyQueue< std::map<std::string, int> > &mq_map){
-    auto content = mq_str.pop();
-    std::vector<std::string> spl_words;
-//    boost::split(spl_words, content, boost::is_any_of("\t"));
+    // boost locale  ..... --> vector spl_words
 
     std::map<std::string, int> new_map;
     for(auto &word : spl_words){
@@ -88,6 +89,8 @@ void merge_maps(MyQueue< std::map<std::string, int> > &mq_maps){
 
 int main()
 {
+    MyConfig mc;
+
     MyQueue< std::string > mq_str;
     MyQueue< std::map<std::string, int> > mq_map;
 
@@ -95,37 +98,16 @@ int main()
 
     std::vector<std::string> ls_filenames = {"data.txt", "data1.txt", "data2.txt"};
 
-    for(auto &f_name : ls_filenames){
-        std::ifstream in_f(f_name);
 
-        std::string line;
-        while (getline(in_f, line)){
-            std::string content;
-            int c = 0;
-            for(int i = 0; i < line.length(); i++) {
-                if (isspace(line[i])){
-                    if (c!= i){
-                        content.append(line.substr(c, i-c)+" ");
-                    }
-                    c = i+1;
-                }
-            }
-            if (c != line.length()){ content.append(line.substr(c, line.length()-c)+ " "); }
-        mq_str.push(std::ref(content));
-
-//        if (! in_f)
-//            { std::cerr << "Couldn't open input-file."; return -2; }
-//        std::string content; std::stringstream ss;
-//        ss << in_f.rdbuf();
-//        content = ss.str();
+    for (int i=0; i < mc.merging_threads; i++){
+        std::thread nt_merge(&merge_maps, std::ref(mq_map));
+        all_my_threads.emplace_back(std::move(nt_merge));
     }
 
+    for (int i=0; i < mc.indexing_threads; i++){
         std::thread nt_index(&index_string, std::ref(mq_str), std::ref(mq_map));
-        std::thread nt_merge(&merge_maps, std::ref(mq_map));
-
         all_my_threads.emplace_back(std::move(nt_index));
-        all_my_threads.emplace_back(std::move(nt_merge));
-
+    }
 
     for (auto &thr: all_my_threads)
         { thr.join(); }
