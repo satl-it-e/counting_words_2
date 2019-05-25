@@ -7,6 +7,6 @@ set(CMAKE_CXX_FLAGS -pthread)
 find_package(Threads REQUIRED)
 
 
-add_executable(counting_words_2 test_main.cpp additional.cpp time_measure.h config.cpp)
+add_executable(counting_words_2 test_main.cpp additional.cpp time_measure.h config.cpp my_archive.cpp)
 
 target_link_libraries(counting_words_2  Threads::Threads)

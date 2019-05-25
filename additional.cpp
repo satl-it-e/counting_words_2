@@ -19,3 +19,8 @@ int is_file_ext(const std::string &file_name, const std::string &ext){
 int is_float(const std::string &s){
     return s.find_first_of(' ') == s.find_last_of(' ');
 }
+
+
+bool is_directory(const std::string& object){
+    return object.back() == '/';
+}
