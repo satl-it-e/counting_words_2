@@ -70,6 +70,10 @@ public:
         std::vector<T> some;
         std::unique_lock<std::mutex> lock(mtx);
         while ((producers_num > 0) || (q->size() >= n)) {
+            while(!notified && (q->size() < n)){
+                std::cout << "Someone gone sleep." << std::endl;
+                cv.wait(lock);
+            }
             while(q->size() >= n) {
                 std::cout << "I'm here!" << std::endl;
                 while (n > 0) {
@@ -78,10 +82,6 @@ public:
                     n--;
                 }
                 return some;
-            }
-            while(!notified){
-                std::cout << "Someone gone sleep." << std::endl;
-                cv.wait(lock);
             }
             notified = false;
         }
@@ -181,6 +181,16 @@ int main()
 
     auto gen_st_time = get_current_time_fenced();
 
+    std::vector<std::thread> all_my_threads;
+
+    for (int i=0; i < mc.indexing_threads; i++){
+        all_my_threads.emplace_back(index_thread, std::ref(mq_str), std::ref(mq_map));
+    }
+
+    for (int i=0; i < mc.merging_threads; i++){
+        all_my_threads.emplace_back(merge_thread, std::ref(mq_map));
+    }
+
 
     // opening archive
     if (is_file_ext(mc.in_file, ".zip")){
@@ -206,44 +216,34 @@ int main()
         mq_str.finish();
     }
 
+    for (auto &thr: all_my_threads)
+    { thr.join(); }
+
     auto read_fn_time = get_current_time_fenced();
 
     std::cout << "Everything had been READ from archive." << std::endl;
 
     std::cout << "***************START******************" << std::endl;
 
-    std::vector<std::thread> all_my_threads;
-
-    for (int i=0; i < mc.indexing_threads; i++){
-        all_my_threads.emplace_back(index_thread, std::ref(mq_str), std::ref(mq_map));
-    }
-
-    for (int i=0; i < mc.merging_threads; i++){
-        all_my_threads.emplace_back(merge_thread, std::ref(mq_map));
-    }
-
-    for (auto &thr: all_my_threads)
-    { thr.join(); }
 
 
     auto index_fn_time = get_current_time_fenced();
 
-    std::vector<std::map<std::string, int>> res;
 
     std::cout << "********Trying to get result**********" << std::endl;
 
-    if (mq_map.can_try_pop(1)) {
-        std::cout << "QUEUE is NOT empty" << std::endl;
-        auto res = mq_map.pop(1);
-        std::cout << "POP successfull" << std::endl;
-    } else{
+
+    if (!mq_map.can_try_pop(1)) {
         std::cerr << "Error in MAP QUEUE" << std::endl;
         return -6;
     }
 
+    std::cout << "QUEUE is NOT empty" << std::endl;
+    auto res = mq_map.pop(1).front();
+    std::cout << "POP successfull" << std::endl;
+
     std::vector<std::pair<std::string, int> > vector_words;
-    std::map<std::string, int> res_front = res.front();
-    for (auto &word: res_front){
+    for (auto &word: res){
         vector_words.emplace_back(word);
     }
 
