@@ -47,9 +47,7 @@ public:
         std::lock_guard<std::mutex> lock(mtx);
         producers_num--;
         if (producers_num == 0){
-            std::cout << "There are no producers here" << std::endl;
         }
-        std::cout << "NOTIFICATION FINISH 🤡" << std::endl;
         notified = true;
         cv.notify_all();
     }
@@ -58,7 +56,6 @@ public:
         std::unique_lock<std::mutex> lock(mtx);
         q->push(element);
         notified = true;
-        std::cout << "NOTIFICATION PUSH 🐼" << std::endl;
         cv.notify_all();
     }
 
@@ -71,11 +68,9 @@ public:
         std::unique_lock<std::mutex> lock(mtx);
         while ((producers_num > 0) || (q->size() >= n)) {
             while(!notified && (q->size() < n)){
-                std::cout << "Someone gone sleep." << std::endl;
                 cv.wait(lock);
             }
             while(q->size() >= n) {
-                std::cout << "I'm here!" << std::endl;
                 while (n > 0) {
                     some.emplace_back(q->front());
                     q->pop();
@@ -111,28 +106,23 @@ std::map<std::string, int> index_string(std::string content){
 }
 
 void index_thread(MyQueue<std::string> &mq_str, MyQueue< std::map<std::string, int>> &mq_map){
-    std::cout << "INDEX🐠 thread started" << std::endl;
     std::vector<std::string> task;
     while (mq_str.can_try_pop(1)){
-        std::cout << "INDEX🐠 pop started🥏" << std::endl;
         task = mq_str.pop(1);
         for (std::string &part: task){
-            std::cout << "INDEX🐠 pop SUCCESS🍏 and pushed" << std::endl;
             mq_map.push(index_string(part));
         }
         if (task.empty()){
-            std::cout << "INDEX🐠 pop FAIL🍎" << std::endl;
         }
     }
-    std::cout << "INDEX🐠 thread FINISHED" << std::endl;
     mq_map.finish();
 }
 
 
 std::map<std::string, int> merge_maps(std::vector< std::map<std::string, int> > maps){
     std::map<std::string, int> new_map;
-    for (auto map: maps){
-        for (auto el: map){
+    for (auto &map: maps){
+        for (auto &el: map){
             if (new_map.find(el.first) == new_map.end()){
                 new_map[el.first] = map[el.first];
             } else{
@@ -145,19 +135,14 @@ std::map<std::string, int> merge_maps(std::vector< std::map<std::string, int> > 
 
 
 void merge_thread(MyQueue< std::map<std::string, int> > &mq_maps){
-    std::cout << "MERGE🦄 thread started" << std::endl;
     std::vector<std::map<std::string, int>> task;
     while (mq_maps.can_try_pop(2)){
-        std::cout << "MERGE🦄 pop started🥏" << std::endl;
         task = mq_maps.pop(2);
         if (!task.empty()){
-            std::cout << "MERGE🦄 pop SUCCESS🍏 and pushing" << std::endl;
             mq_maps.push(merge_maps(task));
         } else{
-            std::cout << "MERGE🦄 pop FAIL🍎" << std::endl;
         }
     }
-    std::cout << "MERGE🦄 thread FINISHED" << std::endl;
 }
 
 int main()
@@ -200,7 +185,6 @@ int main()
         }
         while (arc.next_content_available()){
             content = arc.get_next_content();
-            std::cout << "Reader: " << std::endl;
             mq_str.push(content);
         }
         mq_str.finish();
@@ -223,14 +207,8 @@ int main()
 
     std::cout << "Everything had been READ from archive." << std::endl;
 
-    std::cout << "***************START******************" << std::endl;
-
-
 
     auto index_fn_time = get_current_time_fenced();
-
-
-    std::cout << "********Trying to get result**********" << std::endl;
 
 
     if (!mq_map.can_try_pop(1)) {
@@ -238,9 +216,7 @@ int main()
         return -6;
     }
 
-    std::cout << "QUEUE is NOT empty" << std::endl;
     auto res = mq_map.pop(1).front();
-    std::cout << "POP successfull" << std::endl;
 
     std::vector<std::pair<std::string, int> > vector_words;
     for (auto &word: res){
