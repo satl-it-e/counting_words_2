@@ -26,7 +26,7 @@
 #include "my_archive.h"
 #include "my_queue.h"
 
-
+//#define print_wrong_file_extensions
 
 using namespace boost::locale::boundary;
 using namespace boost::filesystem;
@@ -52,12 +52,13 @@ std::map<std::string, int> index_string(std::string &content){
 
 void index_thread(MyQueue<std::string> &mq_str, MyQueue< std::map<std::string, int>> &mq_map){
     std::vector<std::string> task;
-    while (mq_str.can_try_pop(1)){
+    while (true){
         task = mq_str.pop(1);
         for (std::string &part: task){
             mq_map.push(index_string(part));
         }
         if (task.empty()){
+            break;
         }
     }
     mq_map.finish();
@@ -81,11 +82,12 @@ std::map<std::string, int> merge_maps(std::vector< std::map<std::string, int> > 
 
 void merge_thread(MyQueue< std::map<std::string, int> > &mq_maps){
     std::vector<std::map<std::string, int>> task;
-    while (mq_maps.can_try_pop(2)){
+    while (true){
         task = mq_maps.pop(2);
         if (!task.empty()){
-            mq_maps.push(merge_maps(task));
+            mq_maps.force_push(merge_maps(task));
         } else{
+            break;
         }
     }
 }
@@ -105,7 +107,7 @@ int read_entry(MyArchive &marc, MyQueue<std::string> &mq_str, path &x){
             mq_str.push(content);
         }
 
-    } else{
+    } else if (is_file_ext(filename, ".txt")){
         std::ifstream in_f(filename);
         if (! in_f.is_open() || in_f.rdstate()){
             std::cerr << "Couldn't open the file. " << filename << std::endl;
@@ -116,6 +118,11 @@ int read_entry(MyArchive &marc, MyQueue<std::string> &mq_str, path &x){
         content = ss.str();
         mq_str.push(content);
     }
+#ifdef print_wrong_file_extensions
+    else {
+        std::cerr << "Wrong file extension for file: " << filename << std::endl;
+    }
+#endif
     return 0;
 }
 
@@ -138,9 +145,12 @@ void process_deep(MyArchive &marc, MyQueue<std::string> &mq_str, path x){
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
     std::string conf_file_name = "config.dat";
+    if (argc >= 2){
+        conf_file_name = argv[1];
+    }
 
     // config
     MyConfig mc;
@@ -161,6 +171,10 @@ int main()
     std::vector<std::thread> all_my_threads;
     all_my_threads.reserve(mc.indexing_threads + mc.merging_threads);
 
+    // Reading the content of mc.in_file
+    MyArchive my_arc;
+    std::thread reader(process_deep, std::ref(my_arc), std::ref(mq_str), mc.in_file);
+
     std::cout << "Creating threads." << std::endl;
 
     auto gen_st_time = get_current_time_fenced();
@@ -173,17 +187,13 @@ int main()
         all_my_threads.emplace_back(merge_thread, std::ref(mq_map));
     }
 
-    // Reading the content of mc.in_file
-    MyArchive my_arc;
-
     try
     {
         if (exists(mc.in_file))
         {
-            std::cout << "Start reading." << std::endl;
-            process_deep(my_arc, mq_str, mc.in_file);
+            reader.join();
+            std::cout << "Reader finish" << std::endl;
             mq_str.finish();
-
         }
         else {
             std::cerr << mc.in_file << " does not exist\n";
@@ -204,13 +214,14 @@ int main()
 
     auto gen_fn_time = get_current_time_fenced();         //~~~~~~~~~ general finish
 
+    auto res_1 = mq_map.pop(1);
 
-    if (!mq_map.can_try_pop(1)) {
+    if (res_1.empty()) {
         std::cerr << "Error in MAP QUEUE" << std::endl;
         return -4;
     }
 
-    auto res = mq_map.pop(1).front();
+    auto res = res_1.front();
 
     std::vector<std::pair<std::string, int> > vector_words;
     vector_words.reserve(res.size());
@@ -246,6 +257,3 @@ int main()
 
     return 0;
 }
-
-
-

@@ -1,5 +1,7 @@
 #include "my_archive.h"
 
+//#define print_wrong_file_extensions
+
 
 std::string MyArchive::read_content() {
             size_t total = archive_entry_size(entry);
@@ -46,15 +48,19 @@ int MyArchive::init(std::string& filename){
 
             const char* filename = archive_entry_pathname(entry);
             if (is_directory(filename)){
-//                std::cerr << "Directory in archive" << std::endl;
+#ifdef print_wrong_file_extensions
+                std::cerr << "Directory in archive" << std::endl;
+#endif
                 archive_read_data_skip(a);
             } else {
                 if (is_file_ext(filename, ".txt")) {
                     return read_content();
                 }
-//                else{
-//                    std::cerr << "Wrong file extension of file (not .txt) " << filename << std::endl;
-//                }
+#ifdef print_wrong_file_extensions
+                else{
+                    std::cerr << "Wrong file extension of file (not .txt) " << filename << std::endl;
+                }
+#endif
             }
             return "";
         }

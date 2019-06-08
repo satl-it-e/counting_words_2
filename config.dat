@@ -1,5 +1,5 @@
-in_file          ../../../../Volumes/PGDVD_2010_04_RC2/
+in_file          ../../../../../Volumes/PGDVD_2010_04_RC2/
 to_alph_file     to_alph.txt
 to_numb_file     to_numb.txt
-indexing_threads 100
-merging_threads  100
+indexing_threads 10
+merging_threads  10
