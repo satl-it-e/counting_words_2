@@ -11,9 +11,11 @@
 #include <vector>
 #include <list>
 #include <set>
-
+#include "boost/filesystem.hpp"
 
 #include "additional.h"
+
+namespace fs = boost::filesystem;
 
     class MyConfig{
 

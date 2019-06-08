@@ -33,7 +33,7 @@ public:
         std::unique_lock<std::mutex> lock(mtx);
         q->push(element);
         notified = true;
-        cv.notify_all();
+        cv.notify_one();
     }
 
     bool can_try_pop(int n){
