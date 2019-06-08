@@ -1,5 +1,5 @@
-in_file          bigger_example
+in_file          ../../../../Volumes/PGDVD_2010_04_RC2/
 to_alph_file     to_alph.txt
 to_numb_file     to_numb.txt
-indexing_threads 4
-merging_threads  4
+indexing_threads 100
+merging_threads  100

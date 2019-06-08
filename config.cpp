@@ -1,22 +1,23 @@
 #include "config.h"
+
+
 namespace fs = boost::filesystem;
 
 
 bool MyConfig::set_in_file(const std::list<std::string> &s_values) {
-    if (in_file && !exists(in_file) ){
+    std::set<std::string> arch_ext = {".zip", ".targz", ".tar.gz", ".7z"};
+    in_file = s_values.front();
 
-        if (fs::is_regular_file(in_file) {
-            std::set<std::string> arch_ext = {".zip", ".targz", ".tar.gz", ".7z", ".iso"};
-            std::string ext = get_file_ext(s_values.front());
-            if (ext == ".txt" || arch_ext.find(ext) != arch_ext.end()) {
-                in_file = s_values.front();
-                return true;
-            }
+    if (fs::is_regular_file(in_file)){
+        std::string ext = get_file_ext(in_file);
+        if (ext == ".txt" || arch_ext.find(ext) != arch_ext.end()){
+            return true;
+        } else{
+            return false;
         }
-        std::cout << fs::is_directory(in_file) << std::endl;
-        return fs::is_directory(in_file);
     }
-    return false;
+
+    return fs::is_directory(in_file);
 }
 
 
@@ -98,7 +99,7 @@ int MyConfig::load_configs_from_file(const std::string &f_name){
                 if ( cnf.find(cnf_name) != cnf.end()){
                     if ( cnf[cnf_name](content) ){
                         check_set.erase (cnf_name);
-                    } else { std::cerr << "Error. Couldn't load" + cnf_name + "\n" << std::endl; return -3; }
+                    } else { std::cerr << "Error. Couldn't load " + cnf_name + "\n" << std::endl; return -3; }
                 }
             }
             f.close();

@@ -32,7 +32,7 @@ using namespace boost::locale::boundary;
 using namespace boost::filesystem;
 
 
-std::map<std::string, int> index_string(std::string content){
+std::map<std::string, int> index_string(std::string &content){
     std::locale loc = boost::locale::generator().generate("en_US.UTF-8");
 
     // fold case
@@ -91,9 +91,10 @@ void merge_thread(MyQueue< std::map<std::string, int> > &mq_maps){
 }
 
 
-int read_entry(MyArchive &marc, MyQueue<std::string> &mq_str, path x){
-    //    // opening archive
+int read_entry(MyArchive &marc, MyQueue<std::string> &mq_str, path &x){
+    // opening archive
     std::string filename = x.string(), content;
+    std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
     if (is_file_ext(filename, ".zip")){
         if (marc.init(filename) != 0){
             std::cerr << "Something wrong with file: " << filename << std::endl;
@@ -115,31 +116,24 @@ int read_entry(MyArchive &marc, MyQueue<std::string> &mq_str, path x){
         content = ss.str();
         mq_str.push(content);
     }
+    return 0;
 }
 
 
-
 void process_deep(MyArchive &marc, MyQueue<std::string> &mq_str, path x){
-    std::cout << "\t" << x << std::endl;
     if (is_regular_file(x)){
         read_entry(marc, mq_str, x);
     }
 
     else if (is_directory(x))
     {
-//        int i = 0;
         for (directory_entry& y : directory_iterator(x)){
             process_deep(marc, mq_str, y.path());
-//            i++;
-//            if (i > 2){
-//                break;
-//            }
         }
     }
 
     else {
         std::cerr << x << " exists, but is not a regular file or directory\n";
-
     }
 }
 
@@ -219,6 +213,7 @@ int main()
     auto res = mq_map.pop(1).front();
 
     std::vector<std::pair<std::string, int> > vector_words;
+    vector_words.reserve(res.size());
     for (auto &word: res){
         vector_words.emplace_back(word);
     }
