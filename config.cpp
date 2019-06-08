@@ -1,15 +1,34 @@
 #include "config.h"
 
 
-bool MyConfig::set_in_file(const std::list<std::string> &s_values) {
-    std::set<std::string> arch_ext = {".zip", ".targz", ".tar.gz", ".7z", ".iso"};
-    std::string ext = get_file_ext(s_values.front());
+namespace fs = boost::filesystem;
 
-    if (ext == ".txt" || arch_ext.find(ext) != arch_ext.end()){
-        in_file = s_values.front();
-        return true;
+
+bool MyConfig::set_in_file(const std::list<std::string> &s_values) {
+    std::set<std::string> arch_ext = {".zip", ".targz", ".tar.gz", ".7z"};
+
+    if (fs::is_regular_file(in_file)){
+        std::string ext = get_file_ext(s_values.front());
+        if (ext == ".txt" || arch_ext.find(ext) != arch_ext.end()){
+            in_file = s_values.front();
+            std::cout << "good file" << std::endl;
+            return true;
+        } else{
+            std::cout << "bad file" << std::endl;
+            return false;
+        }
     }
-    return fs::is_directory(in_file);
+
+    bool is_dir = fs::is_directory(in_file);
+    std::cout << in_file << std::endl;
+    if (is_dir){
+        std::cout << "good dir" << std::endl;
+
+    } else{
+
+        std::cout << "bad dir" << std::endl;
+    }
+    return is_dir;
 }
 
 
@@ -91,7 +110,7 @@ int MyConfig::load_configs_from_file(const std::string &f_name){
                 if ( cnf.find(cnf_name) != cnf.end()){
                     if ( cnf[cnf_name](content) ){
                         check_set.erase (cnf_name);
-                    } else { std::cerr << "Error. Couldn't load" + cnf_name + "\n" << std::endl; return -3; }
+                    } else { std::cerr << "Error. Couldn't load " + cnf_name + "\n" << std::endl; return -3; }
                 }
             }
             f.close();
