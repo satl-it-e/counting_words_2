@@ -15,8 +15,6 @@
 
 #include "additional.h"
 
-namespace fs = boost::filesystem;
-
     class MyConfig{
 
         public:

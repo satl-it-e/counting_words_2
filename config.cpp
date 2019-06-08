@@ -1,15 +1,22 @@
 #include "config.h"
+namespace fs = boost::filesystem;
 
 
 bool MyConfig::set_in_file(const std::list<std::string> &s_values) {
-    std::set<std::string> arch_ext = {".zip", ".targz", ".tar.gz", ".7z", ".iso"};
-    std::string ext = get_file_ext(s_values.front());
+    if (in_file && !exists(in_file) ){
 
-    if (ext == ".txt" || arch_ext.find(ext) != arch_ext.end()){
-        in_file = s_values.front();
-        return true;
+        if (fs::is_regular_file(in_file) {
+            std::set<std::string> arch_ext = {".zip", ".targz", ".tar.gz", ".7z", ".iso"};
+            std::string ext = get_file_ext(s_values.front());
+            if (ext == ".txt" || arch_ext.find(ext) != arch_ext.end()) {
+                in_file = s_values.front();
+                return true;
+            }
+        }
+        std::cout << fs::is_directory(in_file) << std::endl;
+        return fs::is_directory(in_file);
     }
-    return fs::is_directory(in_file);
+    return false;
 }
 
 
